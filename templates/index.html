@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mes tâches</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            line-height: 1.4;
+        }
+        h1 {
+            color: #333;
+        }
+        ul {
+            padding-left: 20px;
+        }
+        .task-done {
+            color: #777;
+            text-decoration: line-through;
+        }
+        .task-todo {
+            color: #000;
+        }
+        .task-meta {
+            font-size: 0.8rem;
+            color: #888;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Mes tâches</h1>
+
+    <ul>
+<ul>
+    {% for t in tasks %}
+        <li>
+            {% if t["done"] %}
+                <span class="task-done">
+                    {{ t["title"] }} ✅
+                    <span class="task-meta">(terminée)</span>
+                </span>
+            {% else %}
+                <span class="task-todo">
+                    {{ t["title"] }} ⏳
+                    <span class="task-meta">(à faire)</span>
+                </span>
+                
+                <!-- Bouton "Terminer" -->
+                <form action="/done/{{ t['id'] }}" method="post" style="display:inline;">
+                    <button type="submit">Terminer</button>
+                </form>
+            {% endif %}
+
+            <!-- Bouton "Supprimer" -->
+            <form action="/delete/{{ t['id'] }}" method="post" style="display:inline;">
+                <button type="submit">Supprimer</button>
+            </form>
+        </li>
+    {% endfor %}
+</ul>
+
+    </ul>
+<form action="/add" method="post" style="margin-top:20px;">
+    <label for="title">Nouvelle tâche :</label><br>
+    <input type="text" id="title" name="title" required>
+    <button type="submit">Ajouter</button>
+</form>
+    <hr>
+
+    <p style="font-size:0.9rem;color:#666;">
+        Ces tâches viennent de la base SQLite <code>database.db</code>.
+    </p>
+</body>
+</html>
