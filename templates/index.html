@@ -1,168 +1,248 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestionnaire de tâches</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Mister ToDo</title>
+  <style>
+    :root {
+      --accent:#2563eb; --accent-h:#1d4ed8; --accent-light:#eff6ff;
+      --border:#e2e8f0; --fg:#111827; --muted:#6b7280;
+      --bg:#f1f5f9; --card:#fff;
+      --green:#16a34a; --green-bg:#f0fdf4; --green-border:#bbf7d0;
+      --red:#b91c1c;   --red-bg:#fef2f2;   --red-border:#fecaca;
+      --r:12px; --r-sm:8px;
+      --shadow:0 1px 2px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.05);
+    }
+    *,*::before,*::after{box-sizing:border-box}
+    html,body{margin:0;background:var(--bg);color:var(--fg);
+      font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial,sans-serif}
 
-    <!-- Bootstrap en CDN -->
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-        crossorigin="anonymous"
-    />
+    /* ── Topbar ── */
+    .topbar{position:sticky;top:0;z-index:10;background:var(--card);
+      border-bottom:1px solid var(--border);padding:0 24px;
+      display:flex;align-items:center;justify-content:space-between;height:56px}
+    .brand{display:flex;align-items:center;gap:9px;text-decoration:none;color:var(--fg)}
+    .brand-icon{width:30px;height:30px;background:var(--accent);border-radius:7px;
+      display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px;flex-shrink:0}
+    .brand-name{font-size:16px;font-weight:700;letter-spacing:-.3px}
+    .brand-name span{color:var(--accent)}
+    .nav{display:flex;align-items:center;gap:6px}
+    .nav-user{font-size:13px;color:var(--muted);padding:5px 10px;
+      background:#f8fafc;border:1px solid var(--border);border-radius:999px}
+    .nav-link{font-size:13px;color:var(--muted);text-decoration:none;
+      padding:5px 12px;border-radius:6px;transition:background .12s,color .12s}
+    .nav-link:hover{background:#f1f5f9;color:var(--fg)}
+    .nav-link.danger:hover{background:var(--red-bg);color:var(--red)}
+
+    /* ── Wrap ── */
+    .wrap{max-width:720px;margin:0 auto;padding:28px 20px 60px}
+
+    /* ── Flash ── */
+    .flash{padding:10px 14px;border-radius:var(--r-sm);margin-bottom:10px;
+      font-size:13px;border:1px solid transparent;line-height:1.4}
+    .flash.success{background:var(--green-bg);border-color:var(--green-border);color:var(--green)}
+    .flash.info   {background:var(--accent-light);border-color:#bfdbfe;color:var(--accent)}
+    .flash.warning{background:#fffbeb;border-color:#fde68a;color:#92400e}
+    .flash.danger {background:var(--red-bg);border-color:var(--red-border);color:var(--red)}
+
+    /* ── Partage par projet (accordéon) ── */
+    .share-panel{border-top:1px solid var(--border)}
+    .share-panel summary{
+      list-style:none;cursor:pointer;padding:9px 18px;
+      font-size:12px;font-weight:600;color:var(--muted);
+      display:flex;align-items:center;gap:6px;user-select:none;
+      transition:background .12s}
+    .share-panel summary::-webkit-details-marker{display:none}
+    .share-panel summary:hover{background:#f8fafc;color:var(--fg)}
+    .share-panel summary::before{content:"⟳";font-size:13px}
+    .share-panel[open] summary::before{content:"✕"}
+    .share-body{padding:12px 18px;border-top:1px solid var(--border);
+      display:flex;flex-direction:column;gap:10px;background:#fafbfc}
+    .share-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+    .share-row .sinput{flex:1;min-width:160px;font:inherit;font-size:13px;border:1.5px solid var(--border);
+      padding:7px 11px;border-radius:var(--r-sm);outline:none;background:#fff;
+      transition:border-color .15s,box-shadow .15s}
+    .share-row .sinput:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .share-row label{font-size:12px;color:#374151;display:flex;align-items:center;gap:5px}
+    .btn-sm{font:inherit;font-size:12px;font-weight:500;padding:7px 13px;
+      border-radius:var(--r-sm);cursor:pointer;border:1px solid;transition:background .12s}
+    .btn-share{background:var(--accent-light);color:var(--accent);border-color:#bfdbfe}
+    .btn-share:hover{background:#dbeafe}
+    .btn-remove{background:var(--red-bg);color:var(--red);border-color:var(--red-border)}
+    .btn-remove:hover{background:#fee2e2}
+
+    /* ── Projet card ── */
+    .cat-card{background:var(--card);border:1px solid var(--border);
+      border-radius:var(--r);box-shadow:var(--shadow);margin-bottom:16px;overflow:hidden}
+    .cat-head{padding:14px 18px 10px;display:flex;align-items:center;gap:10px;
+      border-bottom:1px solid var(--border)}
+    .cat-head h2{font-size:15px;font-weight:700;margin:0;color:var(--fg);flex:1}
+    .badge{font-size:11px;font-weight:600;color:var(--muted);background:#f1f5f9;
+      border:1px solid var(--border);padding:2px 8px;border-radius:999px}
+
+    /* ── Tâche item ── */
+    .task-list{list-style:none;margin:0;padding:0}
+    .task-item{display:flex;align-items:center;padding:10px 18px;
+      border-bottom:1px solid var(--border);gap:12px;transition:background .1s}
+    .task-item:last-child{border-bottom:none}
+    .task-item:hover{background:#fafbfc}
+    .task-title{flex:1;font-size:14px;color:var(--fg);white-space:pre-wrap}
+    .task-empty{padding:12px 18px;font-size:13px;color:var(--muted);font-style:italic}
+    .task-actions{display:flex;gap:6px;opacity:0;transition:opacity .15s}
+    .task-item:hover .task-actions{opacity:1}
+    .btn-done{font:inherit;font-size:12px;font-weight:600;
+      background:var(--green-bg);color:var(--green);border:1px solid var(--green-border);
+      padding:4px 10px;border-radius:6px;cursor:pointer;transition:background .12s}
+    .btn-done:hover{background:#dcfce7}
+    .btn-del{font:inherit;font-size:12px;font-weight:600;
+      background:var(--red-bg);color:var(--red);border:1px solid var(--red-border);
+      padding:4px 10px;border-radius:6px;cursor:pointer;transition:background .12s}
+    .btn-del:hover{background:#fee2e2}
+
+    /* ── Formulaire ajout ── */
+    .add-form{display:flex;gap:8px;padding:10px 18px;background:#fafbfc;
+      border-top:1px solid var(--border);flex-wrap:wrap}
+    .add-input{flex:1;min-width:160px;font:inherit;font-size:14px;
+      border:1.5px solid var(--border);padding:8px 12px;border-radius:var(--r-sm);
+      outline:none;background:#fff;transition:border-color .15s,box-shadow .15s}
+    .add-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+    .btn-add{font:inherit;font-size:13px;font-weight:600;
+      background:var(--accent);color:#fff;border:none;
+      padding:8px 16px;border-radius:var(--r-sm);cursor:pointer;
+      white-space:nowrap;transition:background .12s}
+    .btn-add:hover{background:var(--accent-h)}
+
+    /* ── Section terminées ── */
+    .done-panel{background:var(--card);border:1px solid var(--border);
+      border-radius:var(--r);box-shadow:var(--shadow);margin-top:24px;overflow:hidden}
+    .done-panel summary{list-style:none;cursor:pointer;padding:14px 18px;
+      font-size:14px;font-weight:600;color:var(--muted);
+      display:flex;align-items:center;gap:8px;user-select:none;transition:background .12s}
+    .done-panel summary::-webkit-details-marker{display:none}
+    .done-panel summary:hover{background:#fafbfc;color:var(--fg)}
+    .done-task-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--border)}
+    .done-item{display:flex;align-items:center;padding:9px 18px;
+      border-bottom:1px solid var(--border);gap:12px}
+    .done-item:last-child{border-bottom:none}
+    .done-title{flex:1;font-size:14px;color:#9ca3af;text-decoration:line-through}
+    .done-cat{font-size:11px;color:var(--muted);background:#f1f5f9;
+      border:1px solid var(--border);padding:2px 7px;border-radius:999px;margin-left:4px}
+    .done-empty{padding:12px 18px;font-size:13px;color:var(--muted);font-style:italic}
+  </style>
 </head>
-<body class="bg-light">
+<body>
 
-<div class="d-flex justify-content-end mb-2">
-  <a href="/categories" class="btn btn-sm btn-outline-secondary">Gérer les catégories</a>
-</div>
-
-<!-- === Catégories (À faire) === -->
-{% for cat, items in groups.items() %}
-
-  <div class="card shadow-sm mb-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-      <strong>{{ cat }}</strong>
-      <span class="badge bg-warning text-dark">À faire</span>
-    </div>
-    <ul class="list-group list-group-flush">
-      {% for t in items %}
-        <li class="list-group-item d-flex justify-content-between align-items-center">
-          <span>{{ t["title"] }}</span>
-          <span class="d-flex gap-2">
-            <form action="/done/{{ t['id'] }}" method="post" class="me-2">
-              <button class="btn btn-success btn-sm" type="submit">Terminer ✅</button>
-            </form>
-            <form action="/delete/{{ t['id'] }}" method="post">
-              <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Supprimer cette tâche ?');">Supprimer 🗑</button>
-            </form>
-          </span>
-        </li>
+  <!-- Topbar -->
+  <header class="topbar">
+    <a class="brand" href="/">
+      <div class="brand-icon">✓</div>
+      <span class="brand-name">Mister<span>ToDo</span></span>
+    </a>
+    <nav class="nav">
+      {% if g.user %}
+        <span class="nav-user">{{ g.user['username'] }}</span>
+        <a class="nav-link" href="/projects">Projets</a>
+        <a class="nav-link danger" href="/logout">Déconnexion</a>
       {% else %}
-        <li class="list-group-item text-muted">Rien à faire dans cette catégorie.</li>
-      {% endfor %}
-    </ul>
-  </div>
+        <a class="nav-link" href="/login">Se connecter</a>
+      {% endif %}
+    </nav>
+  </header>
 
-{% endfor %}
+  <main class="wrap">
 
-<!-- === Bloc unique : Terminées (toutes catégories confondues) === -->
-<div class="card shadow-sm mt-4 mb-4">
-  <div class="card-header bg-white d-flex justify-content-between align-items-center">
-    <strong>Terminées</strong>
-    <span class="badge bg-success">Toutes catégories</span>
-  </div>
-  <ul class="list-group list-group-flush">
-    {% if all_done %}
-      {% for t in all_done %}
-        <li class="list-group-item d-flex justify-content-between align-items-center text-muted">
-          <span>
-            <s>{{ t["title"] }}</s>
-            <span class="badge bg-secondary ms-2">{{ t["category"] }}</span>
-          </span>
-          <form action="/delete/{{ t['id'] }}" method="post">
-            <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Supprimer cette tâche ?');">Supprimer 🗑</button>
-          </form>
-        </li>
-      {% endfor %}
-    {% else %}
-      <li class="list-group-item text-muted">Aucune tâche terminée.</li>
-    {% endif %}
-  </ul>
-</div>
+    <!-- Flash messages -->
+    {% with msgs = get_flashed_messages(with_categories=true) %}
+      {% if msgs %}
+        {% for category, message in msgs %}
+          <div class="flash {{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
 
-    <!-- Formulaire d'ajout de tâche -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-<form action="/add" method="post" class="row g-2">
-    <div class="col-5">
-        <input
-            type="text"
-            class="form-control"
-            name="title"
-            placeholder="Nouvelle tâche..."
-            required
-
-    <div class="col-4">
-        <select class="form-select" name="category">
-            <option value="Général">Général</option>
-            <option value="Maison">Maison</option>
-            <option value="Travail">Travail</option>
-            <option value="Urgent">Urgent</option>
-        </select>
-    </div>
-
-    <div class="col-3 d-grid">
-        <button type="submit" class="btn btn-primary">
-            Ajouter
-        </button>
-    </div>
-</form>
+    <!-- Projets -->
+    {% for cat in cats_all %}
+      {% set items = groups.get(cat, []) %}
+      {% set proj = projects_map.get(cat) %}
+      <div class="cat-card">
+        <div class="cat-head">
+          <h2>{{ cat }}</h2>
+          <span class="badge">{{ items|length }}</span>
         </div>
-    </div>
-
-<!-- === Catégories === -->
-{% for cat, g in groups.items() %}
-
-  <!-- À faire pour cette catégorie -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-      <strong>{{ cat }}</strong>
-      <span class="badge bg-warning text-dark">À faire</span>
-    </div>
-    <ul class="list-group list-group-flush">
-      {% if g.todo %}
-        {% for t in g.todo %}
-          <li class="list-group-item d-flex justify-content-between align-items-center">
-            <span>{{ t["title"] }}</span>
-            <span class="d-flex gap-2">
-              <form action="/done/{{ t['id'] }}" method="post" class="me-2">
-                <button class="btn btn-success btn-sm" type="submit">Terminer ✅</button>
-              </form>
-              <form action="/delete/{{ t['id'] }}" method="post">
-                <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Supprimer cette tâche ?');">Supprimer 🗑</button>
-              </form>
-            </span>
-          </li>
-        {% endfor %}
-      {% else %}
-        <li class="list-group-item text-muted">Rien à faire dans cette catégorie.</li>
-      {% endif %}
-    </ul>
-  </div>
-
-  <!-- Terminées pour cette catégorie -->
-  <div class="card shadow-sm mb-4">
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-      <strong>{{ cat }}</strong>
-      <span class="badge bg-success">Terminées</span>
-    </div>
-    <ul class="list-group list-group-flush">
-      {% if g.done %}
-        {% for t in g.done %}
-          <li class="list-group-item d-flex justify-content-between align-items-center text-muted">
-            <span><s>{{ t["title"] }}</s></span>
-            <form action="/delete/{{ t['id'] }}" method="post">
-              <button class="btn btn-outline-danger btn-sm" type="submit" onclick="return confirm('Supprimer cette tâche ?');">Supprimer 🗑</button>
+        <ul class="task-list">
+          {% if items %}
+            {% for t in items %}
+              <li class="task-item">
+                <span class="task-title">{{ t["title"] }}</span>
+                <span class="task-actions">
+                  <form action="/done/{{ t['id'] }}" method="post" style="display:inline">
+                    <input type="hidden" name="_csrf" value="{{ session.get('_csrf') or '' }}">
+                    <button class="btn-done" type="submit">✓ Terminer</button>
+                  </form>
+                  <form action="/delete/{{ t['id'] }}" method="post" style="display:inline"
+                        onsubmit="return confirm('Supprimer cette tâche ?');">
+                    <input type="hidden" name="_csrf" value="{{ session.get('_csrf') or '' }}">
+                    <button class="btn-del" type="submit">✕ Supprimer</button>
+                  </form>
+                </span>
+              </li>
+            {% endfor %}
+          {% else %}
+            <li class="task-empty">Aucune tâche dans ce projet.</li>
+          {% endif %}
+        </ul>
+        <form action="/add" method="post" class="add-form">
+          <input type="hidden" name="_csrf" value="{{ session.get('_csrf') or '' }}">
+          <input type="hidden" name="project" value="{{ cat }}">
+          <input class="add-input" type="text" name="title"
+                 placeholder="Nouvelle tâche dans « {{ cat }} »…" required>
+          <button class="btn-add" type="submit">+ Ajouter</button>
+        </form>
+        {% if proj %}
+        <details class="share-panel">
+          <summary>Partager ce projet</summary>
+          <div class="share-body">
+            <form action="/share_project/{{ proj.id }}" method="post" class="share-row">
+              <input type="hidden" name="_csrf" value="{{ session.get('_csrf') or '' }}">
+              <input class="sinput" name="username" placeholder="Nom d'utilisateur à inviter…" required>
+              <label><input type="checkbox" name="can_edit"> peut éditer</label>
+              <button class="btn-sm btn-share" type="submit">Partager</button>
             </form>
-          </li>
-        {% endfor %}
+            <form action="/unshare_project/{{ proj.id }}" method="post" class="share-row">
+              <input type="hidden" name="_csrf" value="{{ session.get('_csrf') or '' }}">
+              <input class="sinput" name="username" placeholder="Retirer l'accès à…" required>
+              <button class="btn-sm btn-remove" type="submit">Retirer</button>
+            </form>
+          </div>
+        </details>
+        {% endif %}
+      </div>
+    {% endfor %}
+
+    <!-- Tâches terminées -->
+    <details class="done-panel">
+      <summary>
+        Terminées <span class="badge">{{ all_done|length }}</span>
+      </summary>
+      {% if all_done %}
+        <ul class="done-task-list">
+          {% for t in all_done %}
+            <li class="done-item">
+              <span class="done-title">{{ t["title"] }}<span class="done-cat">{{ t["category"] }}</span></span>
+              <form action="/delete/{{ t['id'] }}" method="post" style="display:inline"
+                    onsubmit="return confirm('Supprimer ?');">
+                <input type="hidden" name="_csrf" value="{{ session.get('_csrf') or '' }}">
+                <button class="btn-del" type="submit">✕</button>
+              </form>
+            </li>
+          {% endfor %}
+        </ul>
       {% else %}
-        <li class="list-group-item text-muted">Aucune tâche terminée ici.</li>
+        <div class="done-empty">Aucune tâche terminée pour l'instant.</div>
       {% endif %}
-    </ul>
-  </div>
+    </details>
 
-{% endfor %}
-
-<!-- Bootstrap JS pour les alertes fermables -->
-<script
-    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-    crossorigin="anonymous">
-</script>
-
+  </main>
 </body>
 </html>
